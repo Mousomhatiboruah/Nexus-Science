@@ -40,6 +40,66 @@
             letter-spacing: -0.5px;
         }
 
+        /* --- New Admin & Filter Styles --- */
+        .admin-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .filter-section {
+            max-width: 500px;
+            margin: 15px auto 0;
+            padding: 0 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+        .category-filters::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+
+        .filter-btn {
+            white-space: nowrap;
+            padding: 6px 15px;
+            border-radius: 50px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .date-filter label { font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
+        .date-filter input { border: none; outline: none; font-family: inherit; color: var(--primary); }
+
         #news-container {
             max-width: 500px;
             margin: 20px auto;
@@ -118,19 +178,33 @@
 <body>
 
 <header>
+    <a href="admin.html" class="admin-btn">Admin</a>
     <h1>Science Daily</h1>
 </header>
+
+<div class="filter-section">
+    <div class="category-filters" id="cat-filters">
+        <button class="filter-btn active" onclick="filterCategory('All')">All</button>
+        <button class="filter-btn" onclick="filterCategory('Biology')">Biology</button>
+        <button class="filter-btn" onclick="filterCategory('Space')">Space</button>
+        <button class="filter-btn" onclick="filterCategory('Tech')">Tech</button>
+        <button class="filter-btn" onclick="filterCategory('Physics')">Physics</button>
+    </div>
+
+    <div class="date-filter">
+        <label>Filter by Date:</label>
+        <input type="date" id="datePicker" onchange="filterByDate()">
+    </div>
+</div>
 
 <div id="news-container">
     <div id="loader">Fetching latest discoveries...</div>
 </div>
 
 <script type="module">
-  // Cloud Firestore Modern SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
   import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  // Real Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyAVP5U2HK4B5bqR_q-IAP5fveEkAsXbY8g",
     authDomain: "nexus-science-41e41.firebaseapp.com",
@@ -144,27 +218,55 @@
   const db = getFirestore(app);
   const newsContainer = document.getElementById('news-container');
 
-  // Query to get news sorted by timestamp (Latest First)
+  let allNews = [];
+  let currentCategory = 'All';
+  let currentDateFilter = '';
+
   const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
 
-  // Real-time listener
   onSnapshot(q, (snapshot) => {
-      newsContainer.innerHTML = '';
-      
-      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); 
-      let hasVisibleNews = false;
-
+      allNews = [];
       snapshot.forEach((doc) => {
-          const item = doc.data();
-          
-          // Timestamp check (Milliseconds convert logic)
+          allNews.push({ id: doc.id, ...doc.data() });
+      });
+      renderNews();
+  });
+
+  window.filterCategory = function(cat) {
+      currentCategory = cat;
+      // Update UI buttons
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.innerText === cat);
+      });
+      renderNews();
+  }
+
+  window.filterByDate = function() {
+      currentDateFilter = document.getElementById('datePicker').value;
+      renderNews();
+  }
+
+  function renderNews() {
+      newsContainer.innerHTML = '';
+      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); 
+      let count = 0;
+
+      allNews.forEach((item) => {
           const itemTime = item.timestamp?.toMillis() || Date.now();
+          const itemDateObj = new Date(itemTime);
+          const itemDateString = itemDateObj.toISOString().split('T')[0]; // YYYY-MM-DD
 
-          // Auto-hide older than 1 month
-          if (itemTime < oneMonthAgo) return;
+          // 1. Auto-hide older than 1 month (Keep this as per your original rule)
+          if (itemTime < oneMonthAgo && !currentDateFilter) return;
 
-          hasVisibleNews = true;
-          const date = new Date(itemTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          // 2. Category Filter
+          if (currentCategory !== 'All' && item.category !== currentCategory) return;
+
+          // 3. Date Filter
+          if (currentDateFilter && itemDateString !== currentDateFilter) return;
+
+          count++;
+          const dateLabel = itemDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
           const card = `
             <div class="news-card">
@@ -174,7 +276,7 @@
                     <div class="headline">${item.title}</div>
                     <p class="summary">${item.summary}</p>
                     <div class="card-footer">
-                        <span class="date-text">${date}</span>
+                        <span class="date-text">${dateLabel}</span>
                         <a href="${item.source}" target="_blank" class="source-btn">Source Link →</a>
                     </div>
                 </div>
@@ -183,13 +285,10 @@
           newsContainer.innerHTML += card;
       });
 
-      if (!hasVisibleNews) {
-          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">No science updates found from the last 30 days.</div>';
+      if (count === 0) {
+          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">No science updates found for this selection.</div>';
       }
-  }, (error) => {
-      console.error("Error fetching news: ", error);
-      newsContainer.innerHTML = '<div style="text-align:center; color:red;">Failed to load news. Check Firebase Rules.</div>';
-  });
+  }
 </script>
 
 </body>

@@ -11,6 +11,7 @@
             --bg: #f8fafc;
             --text: #1e293b;
             --accent: #10b981;
+            --danger: #ef4444;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -57,6 +58,29 @@
             cursor: pointer;
             margin-top: 10px;
         }
+        
+        /* News List Styles */
+        .manage-section {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .news-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .news-info h4 { margin: 0; font-size: 0.95rem; }
+        .news-info p { margin: 0; font-size: 0.8rem; color: #64748b; }
+        .actions { display: flex; gap: 8px; }
+        .btn-edit { background: var(--accent); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+
         .preview-box {
             margin-top: 30px;
             width: 100%;
@@ -82,9 +106,9 @@
 <body>
 
 <div class="admin-card">
-    <h2>Post Science News</h2>
+    <h2 id="form-title">Post Science News</h2>
     
-    <div class="form-group">
+    <input type="hidden" id="edit-id"> <div class="form-group">
         <label>News Headline</label>
         <input type="text" id="title" placeholder="Enter title" oninput="updatePreview()">
     </div>
@@ -114,7 +138,7 @@
         <input type="text" id="source" placeholder="NASA, ScienceDaily etc.">
     </div>
 
-    <button class="btn-publish" onclick="publishNews()">Publish News 🚀</button>
+    <button id="submit-btn" class="btn-publish" onclick="publishNews()">Publish News 🚀</button>
 </div>
 
 <div class="preview-box">
@@ -129,12 +153,16 @@
     </div>
 </div>
 
-<script type="module">
-  // Modern Firestore Imports
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+<div class="manage-section">
+    <div class="preview-title">Manage Posted News</div>
+    <div id="news-list">
+        </div>
+</div>
 
-  // --- Mousom, paste your real config here ---
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyAVP5U2HK4B5bqR_q-IAP5fveEkAsXbY8g",
     authDomain: "nexus-science-41e41.firebaseapp.com",
@@ -147,11 +175,42 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // --- Functions ---
+
   window.updatePreview = function() {
       document.getElementById('p-head').innerText = document.getElementById('title').value || "Your News Headline";
       document.getElementById('p-cat').innerText = document.getElementById('category').value;
-      document.getElementById('p-text').innerText = document.getElementById('summary').value || "Your simple English summary will appear here...";
+      document.getElementById('p-text').innerText = document.getElementById('summary').value || "Your summary...";
       document.getElementById('p-img').src = document.getElementById('imageUrl').value;
+  }
+
+  // Fetch and show news
+  async function loadNews() {
+      const listDiv = document.getElementById('news-list');
+      listDiv.innerHTML = "<p style='text-align:center'>Loading news...</p>";
+      
+      const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      
+      listDiv.innerHTML = "";
+      querySnapshot.forEach((documentObj) => {
+          const data = documentObj.data();
+          const id = documentObj.id;
+          
+          const item = document.createElement('div');
+          item.className = 'news-item';
+          item.innerHTML = `
+              <div class="news-info">
+                  <h4>${data.title.substring(0, 30)}...</h4>
+                  <p>${data.category}</p>
+              </div>
+              <div class="actions">
+                  <button class="btn-edit" onclick="editNews('${id}', '${data.title}', '${data.category}', '${data.imageUrl}', '${data.source}', \`${data.summary}\`)">Edit</button>
+                  <button class="btn-delete" onclick="deleteNews('${id}')">Del</button>
+              </div>
+          `;
+          listDiv.appendChild(item);
+      });
   }
 
   window.publishNews = async function() {
@@ -160,19 +219,25 @@
       const summary = document.getElementById('summary').value;
       const imageUrl = document.getElementById('imageUrl').value;
       const source = document.getElementById('source').value;
+      const editId = document.getElementById('edit-id').value;
 
       if(title && summary && imageUrl) {
           try {
-              // Using Firestore 'addDoc' instead of Realtime Database 'push'
-              await addDoc(collection(db, "news"), {
-                  title,
-                  category,
-                  summary,
-                  imageUrl,
-                  source,
-                  timestamp: serverTimestamp()
-              });
-              alert("Science Update Published Successfully! 🚀");
+              if(editId) {
+                  // Update existing news
+                  await updateDoc(doc(db, "news", editId), {
+                      title, category, summary, imageUrl, source,
+                      timestamp: serverTimestamp()
+                  });
+                  alert("News Updated! ✅");
+              } else {
+                  // Add new news
+                  await addDoc(collection(db, "news"), {
+                      title, category, summary, imageUrl, source,
+                      timestamp: serverTimestamp()
+                  });
+                  alert("News Published! 🚀");
+              }
               location.reload(); 
           } catch (error) {
               alert("Error: " + error.message);
@@ -181,6 +246,31 @@
           alert("Please fill all essential fields!");
       }
   }
+
+  window.deleteNews = async function(id) {
+      if(confirm("Are you sure you want to delete this news?")) {
+          await deleteDoc(doc(db, "news", id));
+          alert("Deleted!");
+          loadNews();
+      }
+  }
+
+  window.editNews = function(id, title, category, img, src, summary) {
+      document.getElementById('edit-id').value = id;
+      document.getElementById('title').value = title;
+      document.getElementById('category').value = category;
+      document.getElementById('imageUrl').value = img;
+      document.getElementById('source').value = src;
+      document.getElementById('summary').value = summary;
+      
+      document.getElementById('form-title').innerText = "Edit News";
+      document.getElementById('submit-btn').innerText = "Update News ✅";
+      window.scrollTo(0,0);
+      updatePreview();
+  }
+
+  // Load news on startup
+  loadNews();
 </script>
 
 </body>
