@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Daily - Short & Trusted Updates</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --accent: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 1.4rem; 
+            color: var(--primary); 
+            letter-spacing: -0.5px;
+        }
+
+        #news-container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 0 15px 50px 15px;
+        }
+
+        .news-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .news-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .category-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+            padding: 4px 10px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .headline {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .summary {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 15px;
+            font-size: 0.8rem;
+        }
+
+        .source-btn {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .date-text {
+            color: #94a3b8;
+        }
+
+        #loader { text-align: center; padding: 20px; font-weight: 600; color: var(--text-sub); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Science Daily</h1>
+</header>
+
+<div id="news-container">
+    <div id="loader">Fetching latest discoveries...</div>
+</div>
+
+<script type="module">
+  // Cloud Firestore Modern SDK
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+  // Real Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAVP5U2HK4B5bqR_q-IAP5fveEkAsXbY8g",
+    authDomain: "nexus-science-41e41.firebaseapp.com",
+    projectId: "nexus-science-41e41",
+    storageBucket: "nexus-science-41e41.firebasestorage.app",
+    messagingSenderId: "451271613286",
+    appId: "1:451271613286:web:4a1a16777d4298334a86a7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const newsContainer = document.getElementById('news-container');
+
+  // Query to get news sorted by timestamp (Latest First)
+  const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
+
+  // Real-time listener
+  onSnapshot(q, (snapshot) => {
+      newsContainer.innerHTML = '';
+      
+      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); 
+      let hasVisibleNews = false;
+
+      snapshot.forEach((doc) => {
+          const item = doc.data();
+          
+          // Timestamp check (Milliseconds convert logic)
+          const itemTime = item.timestamp?.toMillis() || Date.now();
+
+          // Auto-hide older than 1 month
+          if (itemTime < oneMonthAgo) return;
+
+          hasVisibleNews = true;
+          const date = new Date(itemTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+          const card = `
+            <div class="news-card">
+                <img src="${item.imageUrl}" class="news-img" alt="Science News">
+                <div class="card-content">
+                    <span class="category-tag">${item.category}</span>
+                    <div class="headline">${item.title}</div>
+                    <p class="summary">${item.summary}</p>
+                    <div class="card-footer">
+                        <span class="date-text">${date}</span>
+                        <a href="${item.source}" target="_blank" class="source-btn">Source Link →</a>
+                    </div>
+                </div>
+            </div>
+          `;
+          newsContainer.innerHTML += card;
+      });
+
+      if (!hasVisibleNews) {
+          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">No science updates found from the last 30 days.</div>';
+      }
+  }, (error) => {
+      console.error("Error fetching news: ", error);
+      newsContainer.innerHTML = '<div style="text-align:center; color:red;">Failed to load news. Check Firebase Rules.</div>';
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShortNews Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --accent: #10b981;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .admin-card {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h2 { margin-bottom: 20px; font-size: 1.5rem; color: var(--primary); text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); }
+        textarea { height: 100px; resize: none; }
+        .btn-publish {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .preview-box {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 450px;
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 20px;
+        }
+        .preview-title { font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin-bottom: 15px; text-align: center; }
+        .news-card-preview {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
+        }
+        .preview-img { width: 100%; height: 180px; object-fit: cover; background: #ddd; }
+        .preview-content { padding: 15px; }
+        .preview-cat { font-size: 0.7rem; color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .preview-head { font-size: 1.1rem; font-weight: bold; margin: 5px 0; }
+        .preview-text { font-size: 0.9rem; color: #475569; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="admin-card">
+    <h2>Post Science News</h2>
+    
+    <div class="form-group">
+        <label>News Headline</label>
+        <input type="text" id="title" placeholder="Enter title" oninput="updatePreview()">
+    </div>
+
+    <div class="form-group">
+        <label>Category</label>
+        <select id="category" onchange="updatePreview()">
+            <option value="Biology">Biology</option>
+            <option value="Space">Space</option>
+            <option value="Tech">Technology</option>
+            <option value="Physics">Physics</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Summary (Simple English)</label>
+        <textarea id="summary" placeholder="Summary here..." oninput="updatePreview()"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Image URL</label>
+        <input type="text" id="imageUrl" placeholder="Paste image link" oninput="updatePreview()">
+    </div>
+
+    <div class="form-group">
+        <label>Source Link</label>
+        <input type="text" id="source" placeholder="NASA, ScienceDaily etc.">
+    </div>
+
+    <button class="btn-publish" onclick="publishNews()">Publish News 🚀</button>
+</div>
+
+<div class="preview-box">
+    <div class="preview-title">Real-time Preview</div>
+    <div id="news-preview" class="news-card-preview">
+        <img src="" id="p-img" class="preview-img" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Preview'">
+        <div class="preview-content">
+            <div class="preview-cat" id="p-cat">Category</div>
+            <div class="preview-head" id="p-head">Your News Headline</div>
+            <p class="preview-text" id="p-text">Your simple English summary will appear here...</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+  // Modern Firestore Imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+  // --- Mousom, paste your real config here ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyAVP5U2HK4B5bqR_q-IAP5fveEkAsXbY8g",
+    authDomain: "nexus-science-41e41.firebaseapp.com",
+    projectId: "nexus-science-41e41",
+    storageBucket: "nexus-science-41e41.firebasestorage.app",
+    messagingSenderId: "451271613286",
+    appId: "1:451271613286:web:4a1a16777d4298334a86a7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.updatePreview = function() {
+      document.getElementById('p-head').innerText = document.getElementById('title').value || "Your News Headline";
+      document.getElementById('p-cat').innerText = document.getElementById('category').value;
+      document.getElementById('p-text').innerText = document.getElementById('summary').value || "Your simple English summary will appear here...";
+      document.getElementById('p-img').src = document.getElementById('imageUrl').value;
+  }
+
+  window.publishNews = async function() {
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const summary = document.getElementById('summary').value;
+      const imageUrl = document.getElementById('imageUrl').value;
+      const source = document.getElementById('source').value;
+
+      if(title && summary && imageUrl) {
+          try {
+              // Using Firestore 'addDoc' instead of Realtime Database 'push'
+              await addDoc(collection(db, "news"), {
+                  title,
+                  category,
+                  summary,
+                  imageUrl,
+                  source,
+                  timestamp: serverTimestamp()
+              });
+              alert("Science Update Published Successfully! 🚀");
+              location.reload(); 
+          } catch (error) {
+              alert("Error: " + error.message);
+          }
+      } else {
+          alert("Please fill all essential fields!");
+      }
+  }
+</script>
+
+</body>
+</html>
