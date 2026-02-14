@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Science Daily - Short & Trusted Updates</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
@@ -13,6 +14,7 @@
             --text-main: #0f172a;
             --text-sub: #475569;
             --accent: #10b981;
+            --heart: #ef4444;
         }
 
         body {
@@ -40,7 +42,6 @@
             letter-spacing: -0.5px;
         }
 
-        /* --- New Admin & Filter Styles --- */
         .admin-btn {
             position: absolute;
             right: 15px;
@@ -68,9 +69,9 @@
             gap: 8px;
             overflow-x: auto;
             padding-bottom: 5px;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
+            scrollbar-width: none;
         }
-        .category-filters::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+        .category-filters::-webkit-scrollbar { display: none; }
 
         .filter-btn {
             white-space: nowrap;
@@ -153,12 +154,41 @@
             margin-bottom: 20px;
         }
 
+        /* --- Updated Interactions --- */
+        .interactions {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .interaction-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            transition: 0.2s;
+        }
+
+        .interaction-btn i { font-size: 1.1rem; }
+        .like-btn.liked i { color: var(--heart); animation: scaleUp 0.3s ease; }
+        .share-btn:active { color: var(--accent); }
+
+        @keyframes scaleUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
         .card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 15px;
             font-size: 0.8rem;
         }
 
@@ -168,10 +198,7 @@
             font-weight: 600;
         }
 
-        .date-text {
-            color: #94a3b8;
-        }
-
+        .date-text { color: #94a3b8; }
         #loader { text-align: center; padding: 20px; font-weight: 600; color: var(--text-sub); }
     </style>
 </head>
@@ -234,7 +261,6 @@
 
   window.filterCategory = function(cat) {
       currentCategory = cat;
-      // Update UI buttons
       document.querySelectorAll('.filter-btn').forEach(btn => {
           btn.classList.toggle('active', btn.innerText === cat);
       });
@@ -246,6 +272,17 @@
       renderNews();
   }
 
+  // --- New Share & Like Functions ---
+  window.toggleLike = function(btn) {
+      btn.classList.toggle('liked');
+  }
+
+  window.shareNews = function(title, summary) {
+      const text = `*${title}*\n\n${summary}\n\nRead more at: ${window.location.href}`;
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(whatsappUrl, '_blank');
+  }
+
   function renderNews() {
       newsContainer.innerHTML = '';
       const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); 
@@ -254,15 +291,10 @@
       allNews.forEach((item) => {
           const itemTime = item.timestamp?.toMillis() || Date.now();
           const itemDateObj = new Date(itemTime);
-          const itemDateString = itemDateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+          const itemDateString = itemDateObj.toISOString().split('T')[0];
 
-          // 1. Auto-hide older than 1 month (Keep this as per your original rule)
           if (itemTime < oneMonthAgo && !currentDateFilter) return;
-
-          // 2. Category Filter
           if (currentCategory !== 'All' && item.category !== currentCategory) return;
-
-          // 3. Date Filter
           if (currentDateFilter && itemDateString !== currentDateFilter) return;
 
           count++;
@@ -275,6 +307,16 @@
                     <span class="category-tag">${item.category}</span>
                     <div class="headline">${item.title}</div>
                     <p class="summary">${item.summary}</p>
+                    
+                    <div class="interactions">
+                        <button class="interaction-btn like-btn" onclick="toggleLike(this)">
+                            <i class="fa-regular fa-heart"></i> Like
+                        </button>
+                        <button class="interaction-btn share-btn" onclick="shareNews('${item.title.replace(/'/g, "\\'")}', '${item.summary.replace(/'/g, "\\'")}')">
+                            <i class="fa-regular fa-share-from-square"></i> Share
+                        </button>
+                    </div>
+
                     <div class="card-footer">
                         <span class="date-text">${dateLabel}</span>
                         <a href="${item.source}" target="_blank" class="source-btn">Source Link →</a>
@@ -286,7 +328,7 @@
       });
 
       if (count === 0) {
-          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">No science updates found for this selection.</div>';
+          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">No science updates found.</div>';
       }
   }
 </script>
