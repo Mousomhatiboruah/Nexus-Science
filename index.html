@@ -3,207 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Science Daily - Short & Trusted Updates</title>
+    <title>Nexus Science - Personal Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #2563eb;
-            --bg: #f1f5f9;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-sub: #475569;
-            --accent: #10b981;
-            --heart: #ef4444;
+            --primary: #2563eb; --bg: #f1f5f9; --card-bg: #ffffff;
+            --text-main: #0f172a; --text-sub: #475569; --border: #e2e8f0;
+        }
+
+        /* --- Dark Mode Colors --- */
+        body.dark-mode {
+            --bg: #0f172a; --card-bg: #1e293b;
+            --text-main: #f8fafc; --text-sub: #94a3b8; --border: #334155;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif; background-color: var(--bg);
+            color: var(--text-main); margin: 0; transition: 0.3s; line-height: 1.6;
         }
 
         header {
-            background: white;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            background: var(--card-bg); padding: 15px; text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        header h1 { 
-            margin: 0; 
-            font-size: 1.4rem; 
-            color: var(--primary); 
-            letter-spacing: -0.5px;
+        header h1 { margin: 0; font-size: 1.2rem; color: var(--primary); flex-grow: 1; }
+
+        /* --- Search & Dark Mode Controls --- */
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .theme-toggle { background: none; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; }
+        
+        .search-container { max-width: 500px; margin: 15px auto; padding: 0 15px; }
+        .search-box {
+            width: 100%; padding: 12px 15px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--card-bg);
+            color: var(--text-main); outline: none; font-size: 0.95rem;
         }
 
-        .admin-btn {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .filter-section {
-            max-width: 500px;
-            margin: 15px auto 0;
-            padding: 0 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .category-filters {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none;
-        }
+        .filter-section { max-width: 500px; margin: 0 auto; padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+        .category-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .category-filters::-webkit-scrollbar { display: none; }
 
         .filter-btn {
-            white-space: nowrap;
-            padding: 6px 15px;
-            border-radius: 50px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            font-size: 0.85rem;
-            cursor: pointer;
-            color: var(--text-sub);
+            white-space: nowrap; padding: 6px 15px; border-radius: 50px;
+            border: 1px solid var(--border); background: var(--card-bg);
+            font-size: 0.85rem; cursor: pointer; color: var(--text-sub);
         }
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         .date-filter {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: white;
-            padding: 8px 15px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            display: flex; align-items: center; gap: 10px; background: var(--card-bg);
+            padding: 8px 15px; border-radius: 12px; border: 1px solid var(--border);
         }
-        .date-filter label { font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
-        .date-filter input { border: none; outline: none; font-family: inherit; color: var(--primary); }
+        .date-filter input { border: none; background: none; color: var(--primary); outline: none; }
 
-        #news-container {
-            max-width: 500px;
-            margin: 20px auto;
-            padding: 0 15px 50px 15px;
-        }
-
+        #news-container { max-width: 500px; margin: 20px auto; padding: 0 15px 80px 15px; }
+        
+        /* --- News Card Enhancements --- */
         .news-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.05);
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
         }
-
-        .news-img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .card-content {
-            padding: 20px;
-        }
-
+        .news-img { width: 100%; height: 220px; object-fit: cover; }
+        .card-content { padding: 20px; }
+        
+        .card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .category-tag {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--primary);
-            background: rgba(37, 99, 235, 0.1);
-            padding: 4px 10px;
-            border-radius: 50px;
-            display: inline-block;
-            margin-bottom: 10px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            color: var(--primary); background: rgba(37, 99, 235, 0.1);
+            padding: 4px 10px; border-radius: 50px;
         }
+        .read-time { font-size: 0.75rem; color: var(--text-sub); }
 
-        .headline {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-main);
-            line-height: 1.3;
-        }
+        .headline { font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
+        .summary { font-size: 0.95rem; color: var(--text-sub); margin-bottom: 15px; }
 
-        .summary {
-            font-size: 0.95rem;
-            color: var(--text-sub);
-            margin-bottom: 15px;
-        }
-
-        .interactions {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #f1f5f9;
-        }
-
+        .interactions { display: flex; gap: 15px; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid var(--border); }
         .interaction-btn {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 8px 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            font-weight: 600;
-            flex: 1;
-            justify-content: center;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+            padding: 8px 15px; cursor: pointer; display: flex; align-items: center;
+            gap: 6px; font-size: 0.85rem; color: var(--text-sub); flex: 1; justify-content: center;
         }
+        .like-btn.liked { color: var(--heart); border-color: var(--heart); }
 
-        .like-btn.liked { color: var(--heart); border-color: var(--heart); background: #fff1f2; }
-        .like-btn.liked i { color: var(--heart); font-weight: 900; }
-        .share-btn { color: var(--primary); border-color: var(--primary); background: #eff6ff; }
+        .card-footer { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-sub); }
+        .source-btn { color: var(--primary); text-decoration: none; font-weight: 600; }
 
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #94a3b8;
+        /* --- Back to Top & Shimmer --- */
+        #backToTop {
+            position: fixed; bottom: 20px; right: 20px; background: var(--primary);
+            color: white; border: none; width: 45px; height: 45px; border-radius: 50%;
+            display: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-
-        .source-btn {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
+        
+        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
+        .shimmer-bg {
+            background: #f6f7f8; background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-size: 800px 100%; animation: shimmer 1.5s linear infinite forwards;
         }
-
-        #loader { text-align: center; padding: 20px; font-weight: 600; color: var(--text-sub); }
     </style>
 </head>
 <body>
 
 <header>
-    <a href="admin.html" class="admin-btn">Admin</a>
-    <h1>Science Daily</h1>
+    <button class="theme-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+    <h1>Nexus Science</h1>
+    <a href="admin.html" style="text-decoration:none;"><i class="fas fa-user-shield" style="color:var(--primary)"></i></a>
 </header>
+
+<div class="search-container">
+    <input type="text" class="search-box" id="searchInput" placeholder="Search discoveries..." oninput="handleSearch()">
+</div>
 
 <div class="filter-section">
     <div class="category-filters" id="cat-filters">
@@ -213,16 +125,17 @@
         <button class="filter-btn" onclick="filterCategory('Tech')">Tech</button>
         <button class="filter-btn" onclick="filterCategory('Physics')">Physics</button>
     </div>
-
     <div class="date-filter">
-        <label>Date:</label>
+        <label style="font-size:0.8rem">Date:</label>
         <input type="date" id="datePicker" onchange="filterByDate()">
     </div>
 </div>
 
 <div id="news-container">
-    <div id="loader">Fetching latest discoveries...</div>
+    <div class="news-card"><div class="shimmer-bg" style="height:220px"></div></div>
 </div>
+
+<button id="backToTop" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -244,22 +157,29 @@
   let allNews = [];
   let currentCategory = 'All';
   let currentDateFilter = '';
+  let searchQuery = '';
 
-  const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
-
-  onSnapshot(q, (snapshot) => {
+  onSnapshot(query(collection(db, "news"), orderBy("timestamp", "desc")), (snapshot) => {
       allNews = [];
-      snapshot.forEach((doc) => {
-          allNews.push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach((doc) => allNews.push({ id: doc.id, ...doc.data() }));
       renderNews();
   });
 
+  window.toggleDarkMode = function() {
+      document.body.classList.toggle('dark-mode');
+      const icon = document.querySelector('.theme-toggle i');
+      icon.classList.toggle('fa-moon');
+      icon.classList.toggle('fa-sun');
+  }
+
+  window.handleSearch = function() {
+      searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      renderNews();
+  }
+
   window.filterCategory = function(cat) {
       currentCategory = cat;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.innerText === cat);
-      });
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === cat));
       renderNews();
   }
 
@@ -268,73 +188,49 @@
       renderNews();
   }
 
-  // --- Like & Share System ---
-  window.toggleLike = function(btn) {
-      btn.classList.toggle('liked');
-      const icon = btn.querySelector('i');
-      if(btn.classList.contains('liked')) {
-          icon.className = 'fa-solid fa-heart';
-      } else {
-          icon.className = 'fa-regular fa-heart';
-      }
-  }
-
-  window.shareNews = function(index) {
-      const item = allNews[index];
-      const shareText = `🚀 *Science Update*: ${item.title}\n\n${item.summary}\n\nRead more at: ${window.location.origin}`;
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-      window.open(whatsappUrl, '_blank');
-  }
+  window.scrollToTop = () => window.scrollTo({top: 0, behavior: 'smooth'});
+  window.onscroll = () => document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'block' : 'none';
 
   function renderNews() {
       newsContainer.innerHTML = '';
-      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); 
+      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
       let count = 0;
 
       allNews.forEach((item, index) => {
           const itemTime = item.timestamp?.toMillis() || Date.now();
-          const itemDateObj = new Date(itemTime);
-          const itemDateString = itemDateObj.toISOString().split('T')[0];
+          const itemDateString = new Date(itemTime).toISOString().split('T')[0];
+          const matchesSearch = item.title.toLowerCase().includes(searchQuery) || item.summary.toLowerCase().includes(searchQuery);
 
           if (itemTime < oneMonthAgo && !currentDateFilter) return;
           if (currentCategory !== 'All' && item.category !== currentCategory) return;
           if (currentDateFilter && itemDateString !== currentDateFilter) return;
+          if (searchQuery && !matchesSearch) return;
 
           count++;
-          const dateLabel = itemDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const readTime = Math.ceil(item.summary.split(' ').length / 200);
 
-          const card = `
+          newsContainer.innerHTML += `
             <div class="news-card">
-                <img src="${item.imageUrl}" class="news-img" alt="Science News">
+                <img src="${item.imageUrl}" class="news-img" loading="lazy">
                 <div class="card-content">
-                    <span class="category-tag">${item.category}</span>
+                    <div class="card-meta">
+                        <span class="category-tag">${item.category}</span>
+                        <span class="read-time"><i class="far fa-clock"></i> ${readTime} min read</span>
+                    </div>
                     <div class="headline">${item.title}</div>
                     <p class="summary">${item.summary}</p>
-                    
                     <div class="interactions">
-                        <button class="interaction-btn like-btn" onclick="toggleLike(this)">
-                            <i class="fa-regular fa-heart"></i> Like
-                        </button>
-                        <button class="interaction-btn share-btn" onclick="shareNews(${index})">
-                            <i class="fa-solid fa-share-nodes"></i> Share
-                        </button>
+                        <button class="interaction-btn like-btn" onclick="this.classList.toggle('liked')"><i class="fas fa-heart"></i> Like</button>
+                        <button class="interaction-btn share-btn" onclick="window.open('https://api.whatsapp.com/send?text=${encodeURIComponent(item.title + ' - ' + window.location.href)}')"><i class="fas fa-share"></i> Share</button>
                     </div>
-
                     <div class="card-footer">
-                        <span class="date-text">${dateLabel}</span>
-                        <a href="${item.source}" target="_blank" class="source-btn">Source Link →</a>
+                        <span>${new Date(itemTime).toLocaleDateString()}</span>
+                        <a href="${item.source}" target="_blank" class="source-btn">Source →</a>
                     </div>
                 </div>
-            </div>
-          `;
-          newsContainer.innerHTML += card;
+            </div>`;
       });
-
-      if (count === 0) {
-          newsContainer.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px;">No updates found.</div>';
-      }
   }
 </script>
-
 </body>
 </html>

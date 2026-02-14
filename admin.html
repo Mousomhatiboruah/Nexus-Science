@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShortNews Admin Panel</title>
+    <title>Secure Admin - Nexus Science</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -23,6 +23,22 @@
             flex-direction: column;
             align-items: center;
         }
+
+        /* --- Security Styles --- */
+        #auth-container {
+            margin-top: 100px;
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 350px;
+        }
+        #main-admin-panel { display: none; width: 100%; flex-direction: column; align-items: center; }
+        .logout-btn { background: #64748b; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; font-weight: 600; }
+
+        /* --- Your Original Styles --- */
         .admin-card {
             background: white;
             width: 100%;
@@ -42,9 +58,7 @@
             box-sizing: border-box;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.2s;
         }
-        input:focus, textarea:focus { border-color: var(--primary); }
         textarea { height: 100px; resize: none; }
         .btn-publish {
             width: 100%;
@@ -59,12 +73,7 @@
             margin-top: 10px;
         }
         
-        /* News List Styles */
-        .manage-section {
-            margin-top: 40px;
-            width: 100%;
-            max-width: 450px;
-        }
+        .manage-section { margin-top: 40px; width: 100%; max-width: 450px; }
         .news-item {
             background: white;
             padding: 15px;
@@ -75,28 +84,14 @@
             align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .news-info h4 { margin: 0; font-size: 0.95rem; }
-        .news-info p { margin: 0; font-size: 0.8rem; color: #64748b; }
         .actions { display: flex; gap: 8px; }
-        .btn-edit { background: var(--accent); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-edit { background: var(--accent); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
 
-        .preview-box {
-            margin-top: 30px;
-            width: 100%;
-            max-width: 450px;
-            border-top: 2px dashed #cbd5e1;
-            padding-top: 20px;
-        }
+        .preview-box { margin-top: 30px; width: 100%; max-width: 450px; border-top: 2px dashed #cbd5e1; padding-top: 20px; }
         .preview-title { font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin-bottom: 15px; text-align: center; }
-        .news-card-preview {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: 1px solid #eee;
-        }
-        .preview-img { width: 100%; height: 180px; object-fit: cover; background: #ddd; }
+        .news-card-preview { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
+        .preview-img { width: 100%; height: 180px; object-fit: cover; }
         .preview-content { padding: 15px; }
         .preview-cat { font-size: 0.7rem; color: var(--primary); font-weight: bold; text-transform: uppercase; }
         .preview-head { font-size: 1.1rem; font-weight: bold; margin: 5px 0; }
@@ -105,63 +100,67 @@
 </head>
 <body>
 
-<div class="admin-card">
-    <h2 id="form-title">Post Science News</h2>
+<div id="auth-container">
+    <h2>🔒 Secure Login</h2>
+    <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+    <button class="btn-publish" onclick="verifyAdmin()">Unlock Panel</button>
+</div>
+
+<div id="main-admin-panel" style="display:none;">
+    <button class="logout-btn" onclick="logout()">Logout 🚪</button>
     
-    <input type="hidden" id="edit-id"> <div class="form-group">
-        <label>News Headline</label>
-        <input type="text" id="title" placeholder="Enter title" oninput="updatePreview()">
+    <div class="admin-card">
+        <h2 id="form-title">Post Science News</h2>
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <label>News Headline</label>
+            <input type="text" id="title" placeholder="Enter title" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select id="category" onchange="updatePreview()">
+                <option value="Biology">Biology</option>
+                <option value="Space">Space</option>
+                <option value="Tech">Technology</option>
+                <option value="Physics">Physics</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Summary</label>
+            <textarea id="summary" placeholder="Summary here..." oninput="updatePreview()"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Image URL</label>
+            <input type="text" id="imageUrl" placeholder="Paste image link" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Source Link</label>
+            <input type="text" id="source" placeholder="NASA, ScienceDaily etc.">
+        </div>
+        <button id="submit-btn" class="btn-publish" onclick="publishNews()">Publish News 🚀</button>
     </div>
 
-    <div class="form-group">
-        <label>Category</label>
-        <select id="category" onchange="updatePreview()">
-            <option value="Biology">Biology</option>
-            <option value="Space">Space</option>
-            <option value="Tech">Technology</option>
-            <option value="Physics">Physics</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Summary (Simple English)</label>
-        <textarea id="summary" placeholder="Summary here..." oninput="updatePreview()"></textarea>
-    </div>
-
-    <div class="form-group">
-        <label>Image URL</label>
-        <input type="text" id="imageUrl" placeholder="Paste image link" oninput="updatePreview()">
-    </div>
-
-    <div class="form-group">
-        <label>Source Link</label>
-        <input type="text" id="source" placeholder="NASA, ScienceDaily etc.">
-    </div>
-
-    <button id="submit-btn" class="btn-publish" onclick="publishNews()">Publish News 🚀</button>
-</div>
-
-<div class="preview-box">
-    <div class="preview-title">Real-time Preview</div>
-    <div id="news-preview" class="news-card-preview">
-        <img src="" id="p-img" class="preview-img" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Preview'">
-        <div class="preview-content">
-            <div class="preview-cat" id="p-cat">Category</div>
-            <div class="preview-head" id="p-head">Your News Headline</div>
-            <p class="preview-text" id="p-text">Your simple English summary will appear here...</p>
+    <div class="preview-box">
+        <div class="preview-title">Real-time Preview</div>
+        <div id="news-preview" class="news-card-preview">
+            <img src="" id="p-img" class="preview-img" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Preview'">
+            <div class="preview-content">
+                <div class="preview-cat" id="p-cat">Category</div>
+                <div class="preview-head" id="p-head">Your News Headline</div>
+                <p class="preview-text" id="p-text">Your summary will appear here...</p>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="manage-section">
-    <div class="preview-title">Manage Posted News</div>
-    <div id="news-list">
-        </div>
+    <div class="manage-section">
+        <div class="preview-title">Manage Posted News</div>
+        <div id="news-list"></div>
+    </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAVP5U2HK4B5bqR_q-IAP5fveEkAsXbY8g",
@@ -175,8 +174,45 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // --- Functions ---
+  // --- New Secure Security Functions ---
+  window.verifyAdmin = async function() {
+      const inputPass = document.getElementById('adminPassword').value;
+      const loginBtn = document.querySelector('#auth-container button');
+      
+      loginBtn.innerText = "Verifying...";
+      loginBtn.disabled = true;
 
+      try {
+          // Firebase se secure password fetch karna
+          const docRef = doc(db, "admin_config", "security");
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+              const correctPass = docSnap.data().password; // Firebase wali value
+              
+              if(inputPass === correctPass) {
+                  document.getElementById('auth-container').style.display = 'none';
+                  document.getElementById('main-admin-panel').style.display = 'flex';
+                  loadNews();
+              } else {
+                  alert("Incorrect Password! ❌");
+              }
+          } else {
+              alert("Error: Admin config not found in Database!");
+          }
+      } catch (error) {
+          alert("Security Error: " + error.message);
+      } finally {
+          loginBtn.innerText = "Unlock Panel";
+          loginBtn.disabled = false;
+      }
+  }
+
+  window.logout = function() {
+      location.reload();
+  }
+
+  // --- Original Logic (Maintained) ---
   window.updatePreview = function() {
       document.getElementById('p-head').innerText = document.getElementById('title').value || "Your News Headline";
       document.getElementById('p-cat').innerText = document.getElementById('category').value;
@@ -184,19 +220,15 @@
       document.getElementById('p-img').src = document.getElementById('imageUrl').value;
   }
 
-  // Fetch and show news
   async function loadNews() {
       const listDiv = document.getElementById('news-list');
       listDiv.innerHTML = "<p style='text-align:center'>Loading news...</p>";
-      
       const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
-      
       listDiv.innerHTML = "";
       querySnapshot.forEach((documentObj) => {
           const data = documentObj.data();
           const id = documentObj.id;
-          
           const item = document.createElement('div');
           item.className = 'news-item';
           item.innerHTML = `
@@ -205,7 +237,7 @@
                   <p>${data.category}</p>
               </div>
               <div class="actions">
-                  <button class="btn-edit" onclick="editNews('${id}', '${data.title}', '${data.category}', '${data.imageUrl}', '${data.source}', \`${data.summary}\`)">Edit</button>
+                  <button class="btn-edit" onclick="editNews('${id}', \`${data.title.replace(/`/g, "'")}\`, '${data.category}', '${data.imageUrl}', '${data.source}', \`${data.summary.replace(/`/g, "'")}\`)">Edit</button>
                   <button class="btn-delete" onclick="deleteNews('${id}')">Del</button>
               </div>
           `;
@@ -224,31 +256,19 @@
       if(title && summary && imageUrl) {
           try {
               if(editId) {
-                  // Update existing news
-                  await updateDoc(doc(db, "news", editId), {
-                      title, category, summary, imageUrl, source,
-                      timestamp: serverTimestamp()
-                  });
-                  alert("News Updated! ✅");
+                  await updateDoc(doc(db, "news", editId), { title, category, summary, imageUrl, source, timestamp: serverTimestamp() });
+                  alert("Updated! ✅");
               } else {
-                  // Add new news
-                  await addDoc(collection(db, "news"), {
-                      title, category, summary, imageUrl, source,
-                      timestamp: serverTimestamp()
-                  });
-                  alert("News Published! 🚀");
+                  await addDoc(collection(db, "news"), { title, category, summary, imageUrl, source, timestamp: serverTimestamp() });
+                  alert("Published! 🚀");
               }
               location.reload(); 
-          } catch (error) {
-              alert("Error: " + error.message);
-          }
-      } else {
-          alert("Please fill all essential fields!");
-      }
+          } catch (e) { alert("Error: " + e.message); }
+      } else { alert("Please fill all fields!"); }
   }
 
   window.deleteNews = async function(id) {
-      if(confirm("Are you sure you want to delete this news?")) {
+      if(confirm("Are you sure?")) {
           await deleteDoc(doc(db, "news", id));
           alert("Deleted!");
           loadNews();
@@ -262,16 +282,11 @@
       document.getElementById('imageUrl').value = img;
       document.getElementById('source').value = src;
       document.getElementById('summary').value = summary;
-      
       document.getElementById('form-title').innerText = "Edit News";
       document.getElementById('submit-btn').innerText = "Update News ✅";
       window.scrollTo(0,0);
       updatePreview();
   }
-
-  // Load news on startup
-  loadNews();
 </script>
-
 </body>
 </html>
